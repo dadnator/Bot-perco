@@ -2,6 +2,7 @@ import os
 import discord
 from discord import app_commands
 from discord.ext import commands
+from keep_alive import keep_alive
 import asyncio
 
 token = os.environ['TOKEN_BOT_DISCORD']
@@ -59,4 +60,5 @@ async def perco(interaction: discord.Interaction):
     # Réponse éphémère à l’utilisateur
     await interaction.followup.send("✅ Alerte envoyée, confirmation et remerciement publiés.", ephemeral=True)
 
+keep_alive()
 bot.run(token)
