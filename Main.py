@@ -27,11 +27,13 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user}")
     try:
-        # La synchronisation est maintenant spécifique à la guilde cible
-        # NOTE : La synchronisation globale doit être faite si vous avez d'autres commandes globales.
-        # Ici, on synchronise uniquement pour la guilde cible.
+        # Étape A : Vider les commandes GLOBALES (supprime l'ancienne version)
+        bot.tree.clear_commands(guild=None) # Ceci supprime les commandes globales
+
+        # Étape B : Synchroniser la bonne version pour la guilde cible
         synced = await bot.tree.sync(guild=target_guild) 
         print(f"✅ Commandes slash synchronisées ({len(synced)} commande(s))")
+        
     except Exception as e:
         print(f"❌ Erreur lors de la synchronisation : {e}")
 
