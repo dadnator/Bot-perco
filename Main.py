@@ -27,12 +27,22 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user}")
     try:
-        # Étape A : Vider les commandes GLOBALES (supprime l'ancienne version)
-        bot.tree.clear_commands(guild=None) # Ceci supprime les commandes globales
-
-        # Étape B : Synchroniser la bonne version pour la guilde cible
+        # A. SUPPRIMER TOUTES LES COMMANDES GLOBALES (GUILD=NONE)
+        # Ceci supprime l'ancienne version de /perco qui est en cache.
+        bot.tree.clear_commands(guild=None) 
+        
+        # B. SYNCHRONISER LA LISTE DE NETTOYAGE
+        # Cette étape envoie l'instruction à Discord de supprimer les commandes globales
+        await bot.tree.sync() 
+        print("✅ Instruction de suppression des commandes globales envoyée.")
+        
+        # C. SYNCHRONISER VOS NOUVELLES COMMANDES DE SERVEUR
         synced = await bot.tree.sync(guild=target_guild) 
-        print(f"✅ Commandes slash synchronisées ({len(synced)} commande(s))")
+        print(f"✅ Commandes slash synchronisées pour le serveur cible ({len(synced)} commande(s))")
+        
+    except Exception as e:
+        print(f"❌ Erreur lors de la synchronisation : {e}")
+
         
     except Exception as e:
         print(f"❌ Erreur lors de la synchronisation : {e}")
