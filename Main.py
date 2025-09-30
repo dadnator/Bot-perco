@@ -15,6 +15,10 @@ CONFIRM_CHANNEL_ID = 1241543162078695595
 THANKS_CHANNEL_ID = 1307417706898784267
 # ID du rôle à mentionner
 ROLE_ID = 1219962903260696596
+# ID serveur discord
+TARGET_GUILD_ID = 1213932847518187561
+
+target_guild = discord.Object(id=TARGET_GUILD_ID)
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="/", intents=intents)
@@ -23,12 +27,15 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 async def on_ready():
     print(f"✅ Connecté en tant que {bot.user}")
     try:
-        synced = await bot.tree.sync()
+        # La synchronisation est maintenant spécifique à la guilde cible
+        # NOTE : La synchronisation globale doit être faite si vous avez d'autres commandes globales.
+        # Ici, on synchronise uniquement pour la guilde cible.
+        synced = await bot.tree.sync(guild=target_guild) 
         print(f"✅ Commandes slash synchronisées ({len(synced)} commande(s))")
     except Exception as e:
         print(f"❌ Erreur lors de la synchronisation : {e}")
 
-@bot.tree.command(name="perco", description="Déclenche une alerte percepteur")
+@bot.tree.command(name="perco", description="Déclenche une alerte percepteur", guild=target_guild)
 async def perco(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)  # Répond rapidement pour éviter le timeout
 
