@@ -65,8 +65,8 @@ async def perco(interaction: discord.Interaction):
         f"Prenez les armes <@&{ROLE_ID}> ! ⚔️"
     )
 
-    # Envoi de 22 messages dans le canal d’alerte
-    for _ in range(22):
+    # Envoi de 10 messages dans le canal d’alerte
+    for _ in range(10):
         await perco_channel.send(alert_message, allowed_mentions=discord.AllowedMentions(roles=True))
         await asyncio.sleep(0.2)  # Pause anti-rate limit
 
