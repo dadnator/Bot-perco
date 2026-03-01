@@ -15,7 +15,7 @@ target_guild = discord.Object(id=TARGET_GUILD_ID)
 SETUP_IMAGE_URL = "https://i.imgur.com/8setyQq.png" 
 
 ROLES_PING = {
-    "Sleeping": {"id": 1219962903260696596, "label": " Sleeping", "emoji": "🛡️"},
+    "DÉFENSE PERCO": {"id": 1219962903260696596, "label": " DÉFENSE PERCO", "emoji": "🛡️"},
 }
 
 
