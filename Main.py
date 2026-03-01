@@ -2,82 +2,105 @@ import os
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import View, Button
 from keep_alive import keep_alive
 import asyncio
 
+# --- VOS CONSTANTES ---
 token = os.environ['TOKEN_BOT_DISCORD']
-
-# Salon des alertes répétées
 PERCO_CHANNEL_ID = 1241543017358299208
-# Salon de confirmation
-CONFIRM_CHANNEL_ID = 1241543162078695595
-# Salon de remerciement
-THANKS_CHANNEL_ID = 1307417706898784267
-# ID du rôle à mentionner
-ROLE_ID = 1219962903260696596
-# ID serveur discord
 TARGET_GUILD_ID = 1213932847518187561
-
 target_guild = discord.Object(id=TARGET_GUILD_ID)
 
+SETUP_IMAGE_URL = "https://i.imgur.com/8setyQq.png" 
+
+ROLES_PING = {
+    "Sleeping": {"id": 1446103551951638570, "label": " Sleeping", "emoji": "<:TheSleepingBlossoms:1446119822260965436>"},
+}
+
+
 intents = discord.Intents.default()
+intents.members = True # Nécessaire pour display_name
 bot = commands.Bot(command_prefix="/", intents=intents)
 
+# --- 1. CLASSE POUR LE BOUTON INDIVIDUEL ---
+class PingButton(Button):
+    def __init__(self, role_id: int, role_name: str, label: str, emoji_btn: str):
+        super().__init__(
+            label=label,
+            style=discord.ButtonStyle.danger,
+            emoji=emoji_btn,
+            custom_id=f"ping_button_{role_name.lower().replace(' ', '_')}" 
+        )
+        self.role_id = role_id
+        self.role_name = role_name
+        
+    async def callback(self, interaction: discord.Interaction):
+        try:
+            perco_channel = interaction.client.get_channel(PERCO_CHANNEL_ID)
+            if not perco_channel:
+                return await interaction.response.send_message("❌ Salon introuvable.", ephemeral=True)
+
+            role_mention = f"<@&{self.role_id}>"
+            user_display_name = interaction.user.display_name
+            
+            # --- MODIFICATION ICI : BOUCLE POUR 10 ENVOIS ---
+            # On répond d'abord à l'interaction pour éviter le timeout de 3 secondes
+            await interaction.response.send_message(f"🚀 Envoi de 10 alertes pour **{self.role_name}**...", ephemeral=True)
+
+            for i in range(10):
+                await perco_channel.send(
+                    content=f"{role_mention} **ALERTE {i+1}/10 : Votre percepteur est attaqué !** (Par **{user_display_name}**)",
+                    allowed_mentions=discord.AllowedMentions(roles=True) 
+                )
+                # Une micro-pause pour éviter de se faire bloquer par l'anti-spam de Discord
+                await asyncio.sleep(0.5) 
+            
+        except discord.errors.HTTPException as e:
+            if e.status == 429:
+                print("🛑 Rate limit (spam) détecté !")
+
+# --- 2. CLASSE VIEW ---
+class PingAttackView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        for role_key, role_data in ROLES_PING.items():
+            self.add_item(PingButton(role_id=role_data["id"], role_name=role_key, label=role_data["label"], emoji_btn=role_data["emoji"]))
+
+# --- 3. ÉVÉNEMENTS ---
 @bot.event
 async def on_ready():
-    print(f"✅ Connecté en tant que {bot.user}")
+    print(f"✅ Bot Connecté : {bot.user}")
+    
+    # PAUSE DE SÉCURITÉ : Laisse le bot se stabiliser avant de synchroniser
+    await asyncio.sleep(5)
+    
     try:
-        # A. SUPPRIMER TOUTES LES COMMANDES GLOBALES (GUILD=NONE)
-        # Ceci supprime l'ancienne version de /perco qui est en cache.
-        bot.tree.clear_commands(guild=None) 
-        
-        # B. SYNCHRONISER LA LISTE DE NETTOYAGE
-        # Cette étape envoie l'instruction à Discord de supprimer les commandes globales
-        await bot.tree.sync() 
-        print("✅ Instruction de suppression des commandes globales envoyée.")
-        
-        # C. SYNCHRONISER VOS NOUVELLES COMMANDES DE SERVEUR
-        synced = await bot.tree.sync(guild=target_guild) 
-        print(f"✅ Commandes slash synchronisées pour le serveur cible ({len(synced)} commande(s))")
-        
+        bot.add_view(PingAttackView())
+        # UNE SEULE SYNCHRO : On synchronise uniquement sur le serveur cible
+        await bot.tree.sync(guild=target_guild) 
+        print(f"✅ Commandes slash synchronisées sur le serveur.")
     except Exception as e:
-        print(f"❌ Erreur lors de la synchronisation : {e}")
+        print(f"❌ Erreur Sync : {e}")
 
-        
-    except Exception as e:
-        print(f"❌ Erreur lors de la synchronisation : {e}")
-
-@bot.tree.command(name="perco", description="Déclenche une alerte percepteur", guild=target_guild)
-async def perco(interaction: discord.Interaction):
-    await interaction.response.defer(ephemeral=True)  # Répond rapidement pour éviter le timeout
-
-    perco_channel = bot.get_channel(PERCO_CHANNEL_ID)
-    confirm_channel = bot.get_channel(CONFIRM_CHANNEL_ID)
-    thanks_channel = bot.get_channel(THANKS_CHANNEL_ID)
-
-    if not all([perco_channel, confirm_channel, thanks_channel]):
-        await interaction.followup.send("❌ Un ou plusieurs salons sont introuvables.", ephemeral=True)
-        return
-
-    # Message avec mention du rôle
-    alert_message = (
-        "Un de nos percepteurs est attaqué ! 😡\n"
-        f"Prenez les armes <@&{ROLE_ID}> ! ⚔️"
+# --- 4. COMMANDE SETUP ---
+@bot.tree.command(name="setup_ping_button", description="Envoie l'embed avec les boutons.", guild=target_guild)
+@app_commands.default_permissions(administrator=True) 
+async def setup_ping_button(interaction: discord.Interaction):
+    setup_embed = discord.Embed(
+        title="📢 Un Perco Attaqué ",
+        description="**CLIQUEZ UNE FOIS** sur le bouton pour alerter.",
+        color=discord.Color.blue()
     )
+    if SETUP_IMAGE_URL:
+        setup_embed.set_image(url=SETUP_IMAGE_URL)
+    
+    await interaction.channel.send(embed=setup_embed, view=PingAttackView())
+    await interaction.response.send_message("✅ Panneau envoyé.", ephemeral=True)
 
-    # Envoi de 10 messages dans le canal d’alerte
-    for _ in range(10):
-        await perco_channel.send(alert_message, allowed_mentions=discord.AllowedMentions(roles=True))
-        await asyncio.sleep(0.2)  # Pause anti-rate limit
-
-    # Confirmation publique
-    await confirm_channel.send("L'alerte est bien lancée !")
-
-    # Remerciement à l’utilisateur dans un autre salon
-    await thanks_channel.send(f"Merci à {interaction.user.mention} de nous avoir prévenu 🫂")
-
-    # Réponse éphémère à l’utilisateur
-    await interaction.followup.send("✅ Alerte envoyée, confirmation et remerciement publiés.", ephemeral=True)
-
+# --- LANCEMENT ---
 keep_alive()
-bot.run(token)
+try:
+    bot.run(token)
+except Exception as e:
+    print(f"❌ Erreur fatale au lancement : {e}")
