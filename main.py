@@ -103,7 +103,6 @@ async def setup_ping_button(interaction: discord.Interaction):
 async def perco_immediate(interaction: discord.Interaction):
     # 1. On récupère les infos nécessaires
     role_id = ROLES_PING["DÉFENSE PERCO"]["id"]
-    await start_spam_logic(interaction, role_id)
     perco_channel = interaction.client.get_channel(PERCO_CHANNEL_ID)
     role_mention = f"<@&{role_id}>"
     
