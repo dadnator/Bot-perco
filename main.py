@@ -98,6 +98,28 @@ async def setup_ping_button(interaction: discord.Interaction):
     await interaction.channel.send(embed=setup_embed, view=PingAttackView())
     await interaction.response.send_message("✅ Panneau envoyé.", ephemeral=True)
 
+@bot.tree.command(name="perco", description="LANCE L'ALERTE IMMÉDIATEMENT (10 pings).", guild=target_guild)
+@app_commands.default_permissions(administrator=True) 
+async def perco_immediate(interaction: discord.Interaction):
+    # 1. On récupère les infos nécessaires
+    role_id = ROLES_PING["Sleeping"]["id"]
+    perco_channel = interaction.client.get_channel(PERCO_CHANNEL_ID)
+    role_mention = f"<@&{role_id}>"
+    
+    if not perco_channel:
+        return await interaction.response.send_message("❌ Erreur : Salon d'alerte introuvable.", ephemeral=True)
+
+    # 2. Réponse immédiate pour valider la commande slash
+    await interaction.response.send_message(f"🚨 **ALERTE LANCÉE PAR {interaction.user.display_name} !**", ephemeral=False)
+
+    # 3. La boucle de 10 pings automatique
+    for i in range(10):
+        await perco_channel.send(
+            content=f"{role_mention} **ALERTE {i+1}/10 : PERCO ATTAQUÉ !** (Lancé par **{interaction.user.display_name}**)",
+            allowed_mentions=discord.AllowedMentions(roles=True)
+        )
+        await asyncio.sleep(0.5)
+
 # --- LANCEMENT ---
 keep_alive()
 try:
