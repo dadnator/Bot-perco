@@ -99,7 +99,6 @@ async def setup_ping_button(interaction: discord.Interaction):
     await interaction.response.send_message("✅ Panneau envoyé.", ephemeral=True)
 
 @bot.tree.command(name="perco", description="LANCE L'ALERTE IMMÉDIATEMENT (10 pings).", guild=target_guild)
-@app_commands.default_permissions(administrator=True) 
 async def perco_immediate(interaction: discord.Interaction):
     # 1. On récupère les infos nécessaires
     role_id = ROLES_PING["DÉFENSE PERCO"]["id"]
