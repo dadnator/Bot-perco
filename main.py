@@ -44,13 +44,13 @@ class PingButton(Button):
             role_mention = f"<@&{self.role_id}>"
             user_display_name = interaction.user.display_name
             
-            # --- MODIFICATION ICI : BOUCLE POUR 10 ENVOIS ---
+            # --- MODIFICATION ICI : BOUCLE POUR 5 ENVOIS ---
             # On répond d'abord à l'interaction pour éviter le timeout de 3 secondes
-            await interaction.response.send_message(f"🚀 Envoi de 10 alertes pour **{self.role_name}**...", ephemeral=True)
+            await interaction.response.send_message(f"🚀 Envoi de 5 alertes pour **{self.role_name}**...", ephemeral=True)
 
-            for i in range(10):
+            for i in range(5):
                 await perco_channel.send(
-                    content=f"{role_mention} **ALERTE {i+1}/10 : Votre percepteur est attaqué !** (Par **{user_display_name}**)",
+                    content=f"{role_mention} **ALERTE {i+1}/5 : Votre percepteur est attaqué !** (Par **{user_display_name}**)",
                     allowed_mentions=discord.AllowedMentions(roles=True) 
                 )
                 # Une micro-pause pour éviter de se faire bloquer par l'anti-spam de Discord
@@ -98,7 +98,7 @@ async def setup_ping_button(interaction: discord.Interaction):
     await interaction.channel.send(embed=setup_embed, view=PingAttackView())
     await interaction.response.send_message("✅ Panneau envoyé.", ephemeral=True)
 
-@bot.tree.command(name="perco", description="LANCE L'ALERTE IMMÉDIATEMENT (10 pings).", guild=target_guild)
+@bot.tree.command(name="perco", description="LANCE L'ALERTE IMMÉDIATEMENT (5 pings).", guild=target_guild)
 async def perco_immediate(interaction: discord.Interaction):
     # 1. On récupère les infos nécessaires
     role_id = ROLES_PING["DÉFENSE PERCO"]["id"]
@@ -111,10 +111,10 @@ async def perco_immediate(interaction: discord.Interaction):
     # 2. Réponse immédiate pour valider la commande slash
     await interaction.response.send_message(f"🚨 **ALERTE LANCÉE PAR {interaction.user.display_name} !**", ephemeral=False)
 
-    # 3. La boucle de 10 pings automatique
-    for i in range(10):
+    # 3. La boucle de 5 pings automatique
+    for i in range(5):
         await perco_channel.send(
-            content=f"{role_mention} **ALERTE {i+1}/10 : PERCO ATTAQUÉ !** (Lancé par **{interaction.user.display_name}**)",
+            content=f"{role_mention} **ALERTE {i+1}/5 : PERCO ATTAQUÉ !** (Lancé par **{interaction.user.display_name}**)",
             allowed_mentions=discord.AllowedMentions(roles=True)
         )
         await asyncio.sleep(0.5)
